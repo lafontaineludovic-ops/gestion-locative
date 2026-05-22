@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import { ensureDatabaseUrl, getDatabaseUrl } from "./database-url";
 
 const CREATE_BIENS_TABLE = `
 CREATE TABLE IF NOT EXISTS \`Biens\` (
@@ -16,43 +17,15 @@ CREATE TABLE IF NOT EXISTS \`Biens\` (
 
 let tableEnsured = false;
 
-function getConnectionConfig() {
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
-  }
-
-  const host = process.env.DB_HOST;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASSWORD;
-  const database = process.env.DB_NAME;
-
-  if (!host || !user || !password || !database) {
-    return null;
-  }
-
-  return {
-    host,
-    port: Number(process.env.DB_PORT || 3306),
-    user,
-    password,
-    database,
-  };
-}
-
 export async function ensureBiensTable() {
   if (tableEnsured) return;
 
-  const config = getConnectionConfig();
-  if (!config) {
+  const url = getDatabaseUrl();
+  if (!url) {
     throw new Error("DATABASE_URL ou variables DB_* manquantes.");
   }
 
-  let connection;
-  if (typeof config === "string") {
-    connection = await mysql.createConnection(config);
-  } else {
-    connection = await mysql.createConnection(config);
-  }
+  const connection = await mysql.createConnection(url);
   try {
     await connection.query(CREATE_BIENS_TABLE);
     tableEnsured = true;
@@ -63,17 +36,17 @@ export async function ensureBiensTable() {
 
 export function getDatabaseErrorMessage(error: unknown) {
   if (error instanceof Error) {
-    if (error.message.includes("DATABASE_URL")) {
-      return "Base de données non configurée. Ajoutez DATABASE_URL dans Hostinger.";
+    if (error.message.includes("DATABASE_URL") || error.message.includes("DB_*")) {
+      return "Base de données non configurée dans Hostinger (DATABASE_URL manquante).";
     }
     if (error.message.includes("Access denied")) {
-      return "Identifiants MySQL incorrects. Vérifiez DATABASE_URL dans Hostinger.";
+      return "Identifiants MySQL incorrects dans DATABASE_URL.";
     }
     if (error.message.includes("ECONNREFUSED") || error.message.includes("ETIMEDOUT")) {
       return "Connexion MySQL impossible. Utilisez localhost comme hôte sur Hostinger.";
     }
     if (error.message.includes("doesn't exist") || error.message.includes("n'existe pas")) {
-      return "La table Biens est introuvable. Redéployez l'application ou exécutez le script SQL.";
+      return "La table Biens est introuvable dans la base de données.";
     }
   }
 

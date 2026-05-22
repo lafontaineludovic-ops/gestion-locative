@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { serializeBien, validateBienInput } from "@/lib/biens";
 import { ensureBiensTable, getDatabaseErrorMessage } from "@/lib/ensure-db";
-import { prisma } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -20,7 +20,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
   try {
     await ensureBiensTable();
-    const bien = await prisma.bien.findUnique({ where: { id: bienId } });
+    const bien = await getPrisma().bien.findUnique({ where: { id: bienId } });
 
     if (!bien) {
       return NextResponse.json({ error: "Bien introuvable." }, { status: 404 });
@@ -50,7 +50,7 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Données invalides." }, { status: 400 });
     }
 
-    const bien = await prisma.bien.update({
+    const bien = await getPrisma().bien.update({
       where: { id: bienId },
       data: input,
     });
@@ -72,7 +72,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     await ensureBiensTable();
-    await prisma.bien.delete({ where: { id: bienId } });
+    await getPrisma().bien.delete({ where: { id: bienId } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(`DELETE /api/biens/${id}`, error);
