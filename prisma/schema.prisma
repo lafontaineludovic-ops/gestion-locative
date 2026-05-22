@@ -19,3 +19,15 @@ model Bien {
 
   @@map("Biens")
 }
+
+model Locataire {
+  id        Int      @id @default(autoincrement())
+  nom       String   @db.VarChar(191)
+  bien      String?  @db.VarChar(191)
+  loyer     Int      @default(0)
+  statut    String   @default("À jour") @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Locataires")
+}

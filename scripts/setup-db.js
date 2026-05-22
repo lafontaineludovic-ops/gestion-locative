@@ -14,6 +14,19 @@ CREATE TABLE IF NOT EXISTS \`Biens\` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
+const CREATE_LOCATAIRES_TABLE = `
+CREATE TABLE IF NOT EXISTS \`Locataires\` (
+  \`id\` INT NOT NULL AUTO_INCREMENT,
+  \`nom\` VARCHAR(191) NOT NULL,
+  \`bien\` VARCHAR(191) NULL,
+  \`loyer\` INT NOT NULL DEFAULT 0,
+  \`statut\` VARCHAR(50) NOT NULL DEFAULT 'À jour',
+  \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (\`id\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`;
+
 function getConnectionConfig() {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
@@ -54,12 +67,21 @@ async function main() {
     console.log("[setup-db] Création de la table Biens...");
     await connection.query(CREATE_BIENS_TABLE);
 
-    const [rows] = await connection.query("SHOW TABLES LIKE 'Biens'");
-    if (rows.length === 0) {
+    console.log("[setup-db] Création de la table Locataires...");
+    await connection.query(CREATE_LOCATAIRES_TABLE);
+
+    const [biensRows] = await connection.query("SHOW TABLES LIKE 'Biens'");
+    const [locatairesRows] = await connection.query("SHOW TABLES LIKE 'Locataires'");
+
+    if (biensRows.length === 0) {
       throw new Error("La table Biens n'a pas pu être créée.");
     }
 
-    console.log("[setup-db] Table Biens prête.");
+    if (locatairesRows.length === 0) {
+      throw new Error("La table Locataires n'a pas pu être créée.");
+    }
+
+    console.log("[setup-db] Tables Biens et Locataires prêtes.");
   } catch (error) {
     console.error("[setup-db] Échec:", error.message);
     process.exit(0);
