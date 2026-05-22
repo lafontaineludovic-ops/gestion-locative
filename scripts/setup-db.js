@@ -62,7 +62,7 @@ async function main() {
     console.log("[setup-db] Table Biens prête.");
   } catch (error) {
     console.error("[setup-db] Échec:", error.message);
-    process.exit(1);
+    process.exit(0);
   } finally {
     if (connection) {
       await connection.end();

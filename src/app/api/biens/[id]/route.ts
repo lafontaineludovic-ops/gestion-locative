@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { serializeBien, validateBienInput } from "@/lib/biens";
+import { ensureBiensTable, getDatabaseErrorMessage } from "@/lib/ensure-db";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -18,6 +19,7 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   try {
+    await ensureBiensTable();
     const bien = await prisma.bien.findUnique({ where: { id: bienId } });
 
     if (!bien) {
@@ -27,7 +29,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json(serializeBien(bien));
   } catch (error) {
     console.error(`GET /api/biens/${id}`, error);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    return NextResponse.json({ error: getDatabaseErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -40,6 +42,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   try {
+    await ensureBiensTable();
     const body = await request.json();
     const input = validateBienInput(body);
 
@@ -55,10 +58,7 @@ export async function PUT(request: Request, context: RouteContext) {
     return NextResponse.json(serializeBien(bien));
   } catch (error) {
     console.error(`PUT /api/biens/${id}`, error);
-    return NextResponse.json(
-      { error: "Impossible de modifier le bien." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: getDatabaseErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -71,13 +71,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   try {
+    await ensureBiensTable();
     await prisma.bien.delete({ where: { id: bienId } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(`DELETE /api/biens/${id}`, error);
-    return NextResponse.json(
-      { error: "Impossible de supprimer le bien." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: getDatabaseErrorMessage(error) }, { status: 500 });
   }
 }
