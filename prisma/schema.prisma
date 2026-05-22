@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Bien {
+  id        Int      @id @default(autoincrement())
+  nom       String   @db.VarChar(191)
+  type      String   @db.VarChar(100)
+  adresse   String?  @db.VarChar(255)
+  loyer     Int      @default(0)
+  statut    String   @default("Vacant") @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Biens")
+}
